@@ -215,6 +215,7 @@ function create() {
       );
 
       if (hitBody) {
+        // TODO add death screen
         console.log("dead");
 
         this.alive = false;
