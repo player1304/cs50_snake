@@ -1,12 +1,21 @@
 // https://phaser.io/examples/v3/category/games/snake
 // swipe: HTML5 Cross Platform Game Development Using Phaser 3 (Emanuele Feronato)
 
-var config = {
+const TILE_DIMENSION = 20;
+const CANVAS_COLOR = "#bfcc00";
+
+// game related parameters
+var widthInBlocks = 15;
+var heightInBlocks = 20;
+var gameSpeed = TILE_DIMENSION * 7; // the bigger the SLOWER
+
+
+var gameConfig = {
   type: Phaser.AUTO,
-  width: 640,
-  height: 480,
-  backgroundColor: "#bfcc00",
-  parent: "phaser-example",
+  // a 20x20 grid, translated to pixels
+  width: widthInBlocks * TILE_DIMENSION,
+  height: heightInBlocks * TILE_DIMENSION,
+  backgroundColor: CANVAS_COLOR,
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -17,7 +26,6 @@ var config = {
     create: create,
     update: update,
   },
-
   swipeSettings: {
     swipeMaxTime: 1000, // otherwise it's a drag
     swipeMinDistance: 15, // otherwise it's a click
@@ -30,12 +38,12 @@ var food;
 var cursors;
 
 //  Direction consts
-var UP = 0;
-var DOWN = 1;
-var LEFT = 2;
-var RIGHT = 3;
+const UP = 0;
+const DOWN = 1;
+const LEFT = 2;
+const RIGHT = 3;
 
-var game = new Phaser.Game(config);
+var game = new Phaser.Game(gameConfig);
 
 function preload() {
   this.load.image("food", "assets/food.png");
@@ -46,23 +54,23 @@ function handleSwipe(e) {
   // move the snake by swipes
   var swipeTime = e.upTime - e.downTime; // calc swipe time
   var swipe = new Phaser.Geom.Point(e.upX - e.downX, e.upY - e.downY);
-  var fastEnough = swipeTime < config.swipeSettings.swipeMaxTime;
+  var fastEnough = swipeTime < gameConfig.swipeSettings.swipeMaxTime;
   var swipeMagnitude = Phaser.Geom.Point.GetMagnitude(swipe); // length of the Geom.Point object swipe
-  var longEnough = swipeMagnitude > config.swipeSettings.swipeMinDistance;
+  var longEnough = swipeMagnitude > gameConfig.swipeSettings.swipeMinDistance;
 
   if (fastEnough && longEnough) {
     // now, need to check direction
     Phaser.Geom.Point.SetMagnitude(swipe, 1); // normalize the swipe vector
-    if (swipe.x > config.swipeSettings.swipeMinNormal) {
+    if (swipe.x > gameConfig.swipeSettings.swipeMinNormal) {
       snake.faceRight();
     }
-    if (swipe.x < -config.swipeSettings.swipeMinNormal) {
+    if (swipe.x < -gameConfig.swipeSettings.swipeMinNormal) {
       snake.faceLeft();
     }
-    if (swipe.y > config.swipeSettings.swipeMinNormal) {
+    if (swipe.y > gameConfig.swipeSettings.swipeMinNormal) {
       snake.faceDown();
     }
-    if (swipe.y < -config.swipeSettings.swipeMinNormal) {
+    if (swipe.y < -gameConfig.swipeSettings.swipeMinNormal) {
       snake.faceUp();
     }
   }
@@ -76,7 +84,7 @@ function create() {
       Phaser.GameObjects.Image.call(this, scene);
 
       this.setTexture("food");
-      this.setPosition(x * 16, y * 16);
+      this.setPosition(x * TILE_DIMENSION, y * TILE_DIMENSION);
       this.setOrigin(0);
 
       this.total = 0;
@@ -95,12 +103,16 @@ function create() {
 
       this.body = scene.add.group();
 
-      this.head = this.body.create(x * 16, y * 16, "body");
+      this.head = this.body.create(
+        x * TILE_DIMENSION,
+        y * TILE_DIMENSION,
+        "body"
+      );
       this.head.setOrigin(0);
 
       this.alive = true;
 
-      this.speed = 100;
+      this.speed = gameSpeed;
 
       this.moveTime = 0;
 
@@ -153,7 +165,7 @@ function create() {
           this.headPosition.x = Phaser.Math.Wrap(
             this.headPosition.x - 1,
             0,
-            40
+            widthInBlocks
           );
           break;
 
@@ -161,7 +173,7 @@ function create() {
           this.headPosition.x = Phaser.Math.Wrap(
             this.headPosition.x + 1,
             0,
-            40
+            widthInBlocks
           );
           break;
 
@@ -169,7 +181,7 @@ function create() {
           this.headPosition.y = Phaser.Math.Wrap(
             this.headPosition.y - 1,
             0,
-            30
+            heightInBlocks
           );
           break;
 
@@ -177,7 +189,7 @@ function create() {
           this.headPosition.y = Phaser.Math.Wrap(
             this.headPosition.y + 1,
             0,
-            30
+            heightInBlocks
           );
           break;
       }
@@ -187,8 +199,8 @@ function create() {
       //  Update the body segments and place the last coordinate into this.tail
       Phaser.Actions.ShiftPosition(
         this.body.getChildren(),
-        this.headPosition.x * 16,
-        this.headPosition.y * 16,
+        this.headPosition.x * TILE_DIMENSION,
+        this.headPosition.y * TILE_DIMENSION,
         1,
         this.tail
       );
@@ -242,8 +254,8 @@ function create() {
     updateGrid: function (grid) {
       //  Remove all body pieces from valid positions list
       this.body.children.each(function (segment) {
-        var bx = segment.x / 16;
-        var by = segment.y / 16;
+        var bx = segment.x / TILE_DIMENSION;
+        var by = segment.y / TILE_DIMENSION;
 
         grid[by][bx] = false;
       });
@@ -252,9 +264,21 @@ function create() {
     },
   });
 
-  food = new Food(this, 3, 4);
+  // get random start locations
+  
+  let foodStartPos = {
+    x: Phaser.Math.RND.integerInRange(0, Math.floor(widthInBlocks / 2)),
+    y: Phaser.Math.RND.integerInRange(0, heightInBlocks - 1)
+  }
 
-  snake = new Snake(this, 8, 8);
+  let snakeStartPos = {
+    x: Phaser.Math.RND.integerInRange(Math.floor(widthInBlocks / 2 + 1), widthInBlocks - 1),
+    y: Phaser.Math.RND.integerInRange(0, heightInBlocks - 1)
+  }
+
+  // initiate the first food and snake
+  food = new Food(this, foodStartPos.x, foodStartPos.y);
+  snake = new Snake(this, snakeStartPos.x, snakeStartPos.y);
 
   //  Create our keyboard controls
   cursors = this.input.keyboard.createCursorKeys();
@@ -294,7 +318,7 @@ function update(time, delta) {
 }
 
 /**
- * We can place the food anywhere in our 40x30 grid
+ * We can place the food anywhere in our grid
  * *except* on-top of the snake, so we need
  * to filter those out of the possible food locations.
  * If there aren't any locations left, they've won!
@@ -309,10 +333,10 @@ function repositionFood() {
   //  A Grid we'll use to reposition the food each time it's eaten
   var testGrid = [];
 
-  for (var y = 0; y < 30; y++) {
+  for (var y = 0; y < heightInBlocks; y++) {
     testGrid[y] = [];
 
-    for (var x = 0; x < 40; x++) {
+    for (var x = 0; x < widthInBlocks; x++) {
       testGrid[y][x] = true;
     }
   }
@@ -322,8 +346,8 @@ function repositionFood() {
   //  Purge out false positions
   var validLocations = [];
 
-  for (var y = 0; y < 30; y++) {
-    for (var x = 0; x < 40; x++) {
+  for (var y = 0; y < heightInBlocks; y++) {
+    for (var x = 0; x < widthInBlocks; x++) {
       if (testGrid[y][x] === true) {
         //  Is this position valid for food? If so, add it here ...
         validLocations.push({ x: x, y: y });
@@ -336,7 +360,7 @@ function repositionFood() {
     var pos = Phaser.Math.RND.pick(validLocations);
 
     //  And place it
-    food.setPosition(pos.x * 16, pos.y * 16);
+    food.setPosition(pos.x * TILE_DIMENSION, pos.y * TILE_DIMENSION);
 
     return true;
   } else {

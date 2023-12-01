@@ -1,3 +1,6 @@
 body {
+    /* this is in line with game.js setting */
+    background: #cbd44a; 
     margin: 0;
+    padding: 0px;
 }
