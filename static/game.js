@@ -6,22 +6,100 @@ const CANVAS_COLOR = "#bfcc00";
 
 // game related parameters
 var widthInBlocks = 15; // 15*16 = 240
-var heightInBlocks = 20;
+var heightInBlocks = 20; // 20*16 = 320
 var gameSpeed = TILE_DIMENSION * 7; // the bigger the SLOWER
 
 // game over scene
 class gameover extends Phaser.Scene {
-    constructor() {
-      super("GameOver");
-    }
-  
-    preload() {
-    }
-  
-    create() {
-      console.log("game over scene reached");
-    }
+  constructor() {
+    super("GameOver");
   }
+
+  create() {
+    console.log("game over scene reached");
+
+    this.showMessageBox(
+      // TODO pending score
+      "Game Over! \nYour final score is: \nXXX",
+      gameConfig.width, // 240*0.7 = 168
+      gameConfig.height // 320*0.5 = 160
+    );
+  }
+
+  showMessageBox(text, w, h) {
+    // https://phaser.io/news/2017/10/message-box-tutorial
+    // just in case the message box already exists
+    // destroy it
+    if (this.msgBox) {
+      this.msgBox.destroy();
+    }
+    //make a group to hold all the elements
+    var msgBox = this.add.group();
+
+    //make the back of the message box
+    var back = this.add.sprite(gameConfig.width / 2, gameConfig.height / 2, "boxBack");
+    //make the close button
+    var closeButton = this.add.sprite(gameConfig.width / 2, gameConfig.height / 2, "closeButton");
+    //make a text field
+    var text1 = this.add.text(gameConfig.width / 2, gameConfig.height / 2 + 10, text);
+
+    //set the textfeild to align to middle, and wrap if the text is too long
+    var gameOverTextStyle = {
+        // https://newdocs.phaser.io/docs/3.70.0/Phaser.Types.GameObjects.Text.TextStyle
+      align: "center",
+      color: "#656B00",
+      wordWrapWidth: w * 0.9,
+    };
+
+    text1.setStyle(gameOverTextStyle);
+
+    //set the width and height passed
+    //in the parameters
+    back.width = w;
+    back.height = h;
+
+    closeButton.width = w / 2;
+    closeButton.height = h / 10;
+    //
+    //
+    //
+    //add the elements to the group
+    msgBox.add(back);
+    msgBox.add(closeButton);
+    msgBox.add(text1);
+    //
+    //set the close button
+    //in the center horizontally
+    //and near the bottom of the box vertically
+    closeButton.x = w/2; 
+    closeButton.y = h/2 + closeButton.height*2;
+    //enable the button for input
+    closeButton.setInteractive();
+    //add a listener to destroy the box when the button is pressed
+    closeButton.on("pointerdown", function(){
+        this.hideBox();
+        }, this);
+    //
+    //
+    //set the message box in the center of the screen
+    msgBox.x = gameConfig.width / 2 - msgBox.width / 2;
+    msgBox.y = gameConfig.height / 2 - msgBox.height / 2;
+    //
+    //set the text in the middle of the message box
+    text1.x = back.width / 2 - text1.width / 2;
+    text1.y = back.height / 2 - text1.height / 2;
+    //make a state reference to the messsage box
+    this.msgBox = msgBox;
+  }
+
+  hideBox() {
+    //destroy the box when the button is pressed
+    this.msgBox.destroy();
+
+    // TODO don't know if it works: try to restart the scene
+    location.reload();
+  }
+}
 
 var gameConfig = {
   type: Phaser.AUTO,
@@ -34,11 +112,14 @@ var gameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
     parent: "thegame", // div tag in index.html
   },
-  scene: [{
-    preload: preload,
-    create: create,
-    update: update,
-  }, gameover],
+  scene: [
+    {
+      preload: preload,
+      create: create,
+      update: update,
+    },
+    gameover,
+  ],
   swipeSettings: {
     swipeMaxTime: 1000, // otherwise it's a drag
     swipeMinDistance: 15, // otherwise it's a click
@@ -61,6 +142,8 @@ var game = new Phaser.Game(gameConfig);
 function preload() {
   this.load.image("food", "assets/food.png");
   this.load.image("body", "assets/body.png");
+  this.load.image("closeButton", "assets/closeButton.png");
+  this.load.image("boxBack", "assets/boxBack.png");
 }
 
 function handleSwipe(e) {
@@ -90,6 +173,10 @@ function handleSwipe(e) {
 }
 
 function create() {
+    // FOR DEBUG OF GAME OVER SCREEN!!
+    console.log("game over debug enabled!")
+    game.scene.start("GameOver");
+
   var Food = new Phaser.Class({
     Extends: Phaser.GameObjects.Image,
 
@@ -232,7 +319,7 @@ function create() {
         console.log("dead");
         this.alive = false;
 
-        game.scene.start('GameOver');
+        game.scene.start("GameOver");
 
         return false;
       } else {
@@ -280,16 +367,19 @@ function create() {
   });
 
   // get random start locations
-  
+
   let foodStartPos = {
     x: Phaser.Math.RND.integerInRange(0, Math.floor(widthInBlocks / 2)),
-    y: Phaser.Math.RND.integerInRange(0, heightInBlocks - 1)
-  }
+    y: Phaser.Math.RND.integerInRange(0, heightInBlocks - 1),
+  };
 
   let snakeStartPos = {
-    x: Phaser.Math.RND.integerInRange(Math.floor(widthInBlocks / 2 + 1), widthInBlocks - 1),
-    y: Phaser.Math.RND.integerInRange(0, heightInBlocks - 1)
-  }
+    x: Phaser.Math.RND.integerInRange(
+      Math.floor(widthInBlocks / 2 + 1),
+      widthInBlocks - 1
+    ),
+    y: Phaser.Math.RND.integerInRange(0, heightInBlocks - 1),
+  };
 
   // initiate the first food and snake
   food = new Food(this, foodStartPos.x, foodStartPos.y);
@@ -382,3 +472,4 @@ function repositionFood() {
     return false;
   }
 }
+
