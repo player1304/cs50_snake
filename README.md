@@ -2,6 +2,19 @@
 - 16x9分辨率
 - https://phaser.io/examples/v3/category/games/snake
 
+- initialize: 
+	- a snake head moving
+
+update() {
+	check isDead()
+	check isEatingFruit()
+	
+	var currentDirection = RIGHT;
+	snakeMoving(currentDirection) {}
+	
+	
+}
+
 ## Minimum targets
 - Responsive design with touch screen and keyboard support
 - Start, play, game over/score screen
