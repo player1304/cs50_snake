@@ -1,4 +1,5 @@
 // https://phaser.io/examples/v3/category/games/snake
+// swipe: HTML5 Cross Platform Game Development Using Phaser 3 (Emanuele Feronato)
 
 var config = {
   type: Phaser.AUTO,
@@ -10,13 +11,17 @@ var config = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     parent: "thegame", // div tag in index.html
-    width: 1600,
-    height: 900,
   },
   scene: {
     preload: preload,
     create: create,
     update: update,
+  },
+
+  swipeSettings: {
+    swipeMaxTime: 1000, // otherwise it's a drag
+    swipeMinDistance: 15, // otherwise it's a click
+    swipeMinNormal: 0.85, // normalized vector length at least 0.85, i.e. not too diagonal
   },
 };
 
@@ -35,6 +40,32 @@ var game = new Phaser.Game(config);
 function preload() {
   this.load.image("food", "assets/food.png");
   this.load.image("body", "assets/body.png");
+}
+
+function handleSwipe(e) {
+  // move the snake by swipes
+  var swipeTime = e.upTime - e.downTime; // calc swipe time
+  var swipe = new Phaser.Geom.Point(e.upX - e.downX, e.upY - e.downY);
+  var fastEnough = swipeTime < config.swipeSettings.swipeMaxTime;
+  var swipeMagnitude = Phaser.Geom.Point.GetMagnitude(swipe); // length of the Geom.Point object swipe
+  var longEnough = swipeMagnitude > config.swipeSettings.swipeMinDistance;
+
+  if (fastEnough && longEnough) {
+    // now, need to check direction
+    Phaser.Geom.Point.SetMagnitude(swipe, 1); // normalize the swipe vector
+    if (swipe.x > config.swipeSettings.swipeMinNormal) {
+      snake.faceRight();
+    }
+    if (swipe.x < -config.swipeSettings.swipeMinNormal) {
+      snake.faceLeft();
+    }
+    if (swipe.y > config.swipeSettings.swipeMinNormal) {
+      snake.faceDown();
+    }
+    if (swipe.y < -config.swipeSettings.swipeMinNormal) {
+      snake.faceUp();
+    }
+  }
 }
 
 function create() {
@@ -227,6 +258,8 @@ function create() {
 
   //  Create our keyboard controls
   cursors = this.input.keyboard.createCursorKeys();
+  // swipe control
+  this.input.on("pointerup", handleSwipe, this);
 }
 
 function update(time, delta) {
