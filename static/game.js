@@ -5,14 +5,27 @@ const TILE_DIMENSION = 20;
 const CANVAS_COLOR = "#bfcc00";
 
 // game related parameters
-var widthInBlocks = 15;
+var widthInBlocks = 15; // 15*16 = 240
 var heightInBlocks = 20;
 var gameSpeed = TILE_DIMENSION * 7; // the bigger the SLOWER
 
+// game over scene
+class gameover extends Phaser.Scene {
+    constructor() {
+      super("GameOver");
+    }
+  
+    preload() {
+    }
+  
+    create() {
+      console.log("game over scene reached");
+    }
+  }
 
 var gameConfig = {
   type: Phaser.AUTO,
-  // a 20x20 grid, translated to pixels
+  // the game grid, translated to pixels
   width: widthInBlocks * TILE_DIMENSION,
   height: heightInBlocks * TILE_DIMENSION,
   backgroundColor: CANVAS_COLOR,
@@ -21,11 +34,11 @@ var gameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
     parent: "thegame", // div tag in index.html
   },
-  scene: {
+  scene: [{
     preload: preload,
     create: create,
     update: update,
-  },
+  }, gameover],
   swipeSettings: {
     swipeMaxTime: 1000, // otherwise it's a drag
     swipeMinDistance: 15, // otherwise it's a click
@@ -217,8 +230,9 @@ function create() {
       if (hitBody) {
         // TODO add death screen
         console.log("dead");
-
         this.alive = false;
+
+        game.scene.start('GameOver');
 
         return false;
       } else {
