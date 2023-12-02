@@ -1,5 +1,11 @@
-// https://phaser.io/examples/v3/category/games/snake
-// swipe: HTML5 Cross Platform Game Development Using Phaser 3 (Emanuele Feronato)
+/* 
+- phaser 3 official tutorial
+- swipe, audio: HTML5 Cross Platform Game Development Using Phaser 3 (Emanuele Feronato)
+- message box: https://phaser.io/news/2017/10/message-box-tutorial
+- sounds: 
+  - https://opengameart.org/content/ui-sounds
+  - https://opengameart.org/content/10-8bit-coin-sounds
+*/
 
 const TILE_DIMENSION = 20;
 const CANVAS_COLOR = "#bfcc00";
@@ -44,6 +50,8 @@ class playgame extends Phaser.Scene {
       this.load.image("body", "assets/body.png");
       this.load.image("closeButton", "assets/closeButton.png");
       this.load.image("boxBack", "assets/boxBack.png");
+      this.load.audio("eat", "assets/eat.wav");
+      this.load.audio("lose", "assets/lose.ogg");
   }
 
   create() {
@@ -92,6 +100,10 @@ class playgame extends Phaser.Scene {
   
         this.heading = RIGHT;
         this.direction = RIGHT;
+
+        // add the sound effects
+        this.eatSound = game.sound.add("eat");
+        this.loseSound = game.sound.add("lose");
       },
   
       update: function (time) {
@@ -189,7 +201,7 @@ class playgame extends Phaser.Scene {
         if (hitBody) {
           console.log("dead");
           this.alive = false;
-  
+          this.loseSound.play();
           game.scene.start("GameOver");
   
           return false;
@@ -209,9 +221,15 @@ class playgame extends Phaser.Scene {
   
       collideWithFood: function (food) {
         if (this.head.x === food.x && this.head.y === food.y) {
+          console.log("What is 'this' at collideWithFood");
+          console.log(this);
+
           this.grow();
   
           food.eat();
+
+          this.eatSound.play();
+
           this.length++;
   
           //  For every 5 items of food eaten we'll increase the snake speed a little
@@ -257,11 +275,10 @@ class playgame extends Phaser.Scene {
     food = new Food(this, foodStartPos.x, foodStartPos.y);
     snake = new Snake(this, snakeStartPos.x, snakeStartPos.y);
   
-    //  Create our keyboard controls
+    // keyboard controls
     cursors = this.input.keyboard.createCursorKeys();
-    // swipe control
+    // swipe controls
     this.input.on("pointerup", this.handleSwipe, this);
-    
   }
 
   update(time, delta) {
@@ -393,20 +410,19 @@ class gameover extends Phaser.Scene {
 
     this.showMessageBox(
       "Game Over! \nYour final score is: \n" + snake.length,
-      gameConfig.width, // 240*0.7 = 168
-      gameConfig.height // 320*0.5 = 160
+      gameConfig.width,
+      gameConfig.height
     );
   }
 
   showMessageBox(text, w, h) {
-    // https://phaser.io/news/2017/10/message-box-tutorial
-    // seems like it's an older version tutorial...
-    
-    // just in case the message box already exists
-    // destroy it
-    if (this.msgBox) {
-      this.msgBox.destroy();
-    }
+   
+    // remove in case already exists
+    // https://newdocs.phaser.io/docs/3.70.0/Phaser.GameObjects.Group#clear
+    // if (this.msgBox) {
+    //   this.msgBox.clear(true, true);
+    // }
+
     //make a group to hold all the elements
     var msgBox = this.add.group();
 
@@ -483,12 +499,11 @@ class gameover extends Phaser.Scene {
   }
 
   hideBox() {
-    // TODO doesn't appear to be working: destroy the box when the button is pressed
-    this.msgBox.destroy();
+    this.msgBox.clear(true, true);
 
     // try to restart the scene
     console.log(this);
-    // location.reload();  <- not so elegant
+    // location.reload();  <- not so elegant?
     this.scene.start('GameStart');
   }
 }
@@ -520,6 +535,5 @@ window.onload = function() {
   console.log("this");
   game = new Phaser.Game(gameConfig);
   window.focus();
-
 }
 
