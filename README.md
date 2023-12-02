@@ -5,6 +5,6 @@
 - [x] Game over/score screen
 
 ## Additional goals
-- Sound effects
-- Better graphics
-- Local scoreboard with names
+- [x] Sound effects
+- [ ] Better graphics
+- [?] Local scoreboard with names

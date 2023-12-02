@@ -20,6 +20,7 @@ const GAMEOVER_DEBUG = false; // go straight to lose if set to true
 var widthInBlocks = 15; // 15*16 = 240
 var heightInBlocks = 20; // 20*16 = 320
 var gameSpeed = TILE_DIMENSION * 10; // the bigger the SLOWER
+var highScore = {name: "Player 1", score: 0}; // a single entry of {name, score}, which will be compared against localstorage
 
 // initiate the global variables
 var food;
@@ -72,7 +73,7 @@ class playgame extends Phaser.Scene {
   }
 
   initialize() {
-    console.log("play game scene reached");
+    
   }
 
   preload() {
@@ -85,6 +86,7 @@ class playgame extends Phaser.Scene {
   }
 
   create() {
+    console.log("play game scene reached");
     var Food = new Phaser.Class({
       Extends: Phaser.GameObjects.Image,
   
@@ -286,6 +288,12 @@ class playgame extends Phaser.Scene {
       },
     });
   
+    // check for high score
+    this.highScore = localStorage.getItem(gameConfig.localStorageName);
+    if(this.highScore == null){
+      this.highScore = {name: "Player1", score: 0}; // TODO name not used for now
+    }
+
     // get random start locations
   
     let foodStartPos = {
@@ -440,8 +448,20 @@ class gameover extends Phaser.Scene {
     // var test = gameConfig.width;
     // console.log(test);
 
+    console.log("What is 'this' at gameover create()");
+    console.log(this);
+
+    // check if needs to update highScores
+    if (snake.length > highScore.score) {
+      highScore.score = snake.length;
+      localStorage.setItem(gameConfig.localStorageName, highScore.score);
+    }
+
     this.showMessageBox(
-      "Game Over! \nYour final score is: \n" + snake.length,
+      "Game Over! \n\nYour final score is: \n" +
+        snake.length +
+        "\nHighest score is: \n" +
+        highScore.score + "\nby\n" + highScore.name,
       gameConfig.width,
       gameConfig.height
     );
@@ -525,7 +545,7 @@ class gameover extends Phaser.Scene {
     //
     //set the text in the middle of the message box
     text1.x = back.width / 2 - text1.width / 2;
-    text1.y = back.height / 2 - text1.height / 2;
+    text1.y = back.height / 2 - text1.height // go up a bit
     //make a state reference to the messsage box
     this.msgBox = msgBox;
   }
@@ -545,6 +565,7 @@ var gameConfig = {
   width: widthInBlocks * TILE_DIMENSION,
   height: heightInBlocks * TILE_DIMENSION,
   backgroundColor: CANVAS_COLOR,
+  localStorageName: "highScores", // storing high score in a {name, score} dict
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
