@@ -14,6 +14,7 @@ const UP = 0;
 const DOWN = 1;
 const LEFT = 2;
 const RIGHT = 3;
+const GAMEOVER_DEBUG = false; // go straight to lose if set to true
 
 // game related parameters
 var widthInBlocks = 15; // 15*16 = 240
@@ -29,11 +30,40 @@ class gamestart extends Phaser.Scene {
   constructor() {
     super("GameStart");
   }
+  preload() {
+    this.load.image("startButton", "assets/startButton.png");
+  }
 
   create() {
     console.log("game start scene reached");
-    this.scene.start('PlayGame');
+
+    var startGroup = this.add.group();
+
+    // display a start button 
+    var startButton = this.add.sprite(     gameConfig.width / 2,
+    gameConfig.height / 2,
+    "startButton");
+    startButton.x = gameConfig.width / 2;
+    startButton.y = gameConfig.height / 2;
+
+    // add the button to the group
+    startGroup.add(startButton);
+
+    // click button to start
+    startButton.setInteractive();
+    startButton.on(
+        "pointerdown",
+        function () {
+          startGame();
+        },
+        this
+      );
+    function startGame() {
+      startGroup.clear(true, true);
+      game.scene.start('PlayGame');
+    }
   }
+
 }
 
 class playgame extends Phaser.Scene {
@@ -41,7 +71,7 @@ class playgame extends Phaser.Scene {
     super("PlayGame");
   }
 
-  create() {
+  initialize() {
     console.log("play game scene reached");
   }
 
@@ -283,8 +313,10 @@ class playgame extends Phaser.Scene {
 
   update(time, delta) {
     // FOR DEBUG OF GAME OVER SCREEN!!
-    // console.log("game over debug enabled!")
-    // this.scene.start("GameOver");
+    if (GAMEOVER_DEBUG == true) {
+      console.log("game over debug enabled!")
+      this.scene.start("GameOver");
+    }
 
     if (!snake.alive) {
       return;
@@ -404,9 +436,9 @@ class gameover extends Phaser.Scene {
   create() {
     console.log("game over scene reached");
 
-    console.log("test if gameConfig is accessed: ");
-    var test = gameConfig.width;
-    console.log(test);
+    // console.log("test if gameConfig is accessed: ");
+    // var test = gameConfig.width;
+    // console.log(test);
 
     this.showMessageBox(
       "Game Over! \nYour final score is: \n" + snake.length,
@@ -503,8 +535,7 @@ class gameover extends Phaser.Scene {
 
     // try to restart the scene
     console.log(this);
-    // location.reload();  <- not so elegant?
-    this.scene.start('GameStart');
+    this.scene.start('PlayGame');
   }
 }
 
