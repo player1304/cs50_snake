@@ -1,13 +1,10 @@
 ## scratchpad
 
 ## Minimum targets
--[x] Responsive design with touch screen and keyboard support
-- Game over/score screen
-- Customizable size, difficulty (speed)
+- [x] Responsive design with touch screen and keyboard support
+- [x] Game over/score screen
 
 ## Additional goals
+- Sound effects
 - Better graphics
 - Local scoreboard with names
-- Sound effects
-
-
