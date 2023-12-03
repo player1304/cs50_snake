@@ -198,13 +198,7 @@ class playgame extends Phaser.Scene {
       },
 
       move: function (time) {
-        /**
-         * Based on the heading property (which is the direction the pgroup pressed)
-         * we update the headPosition value accordingly.
-         *
-         * The Math.wrap call allow the snake to wrap around the screen, so when
-         * it goes off any of the sides it re-appears on the other.
-         */
+
         switch (this.heading) {
           case LEFT:
             this.headPosition.x = Phaser.Math.Wrap(
@@ -481,21 +475,29 @@ class gameover extends Phaser.Scene {
     // console.log("What is 'this' at gameover create()");
     // console.log(this);
 
-    this.showMessageBox(
-      "Game Over! \n\nYour final score is: \n" +
-        snake.length +
-        "\nHighest score is: \n" +
-        highScore.score +
-        "\nby\n" +
-        highScore.name,
-      gameConfig.width,
-      gameConfig.height
-    );
+    if (highScore == null || highScore.name == null) {
+      // probably in privacy mode
+      this.showMessageBox(
+        "Game Over! \n\nYour final score is: \n" + snake.length,
+        gameConfig.width,
+        gameConfig.height
+      );
+    } else {
+      this.showMessageBox(
+        "Game Over! \n\nYour final score is: \n" +
+          snake.length +
+          "\nHighest score is: \n" +
+          highScore.score +
+          "\nby\n" +
+          highScore.name,
+        gameConfig.width,
+        gameConfig.height
+      );
+    }
   }
 
   showMessageBox(text, w, h) {
     // https://newdocs.phaser.io/docs/3.70.0/Phaser.GameObjects.Group#clear
-
 
     var msgBox = this.add.group();
 
@@ -533,12 +535,10 @@ class gameover extends Phaser.Scene {
     closeButton.width = w / 2;
     closeButton.height = h / 10;
 
-    
     msgBox.add(backDrop);
     msgBox.add(closeButton);
     msgBox.add(gameOverText);
 
-    
     closeButton.x = w / 2;
     closeButton.y = h / 2 + closeButton.height * 2;
     closeButton.setInteractive();

@@ -7,4 +7,4 @@
 ## Additional goals
 - [x] Sound effects
 - [ ] Better graphics
-- [?] Local scoreboard with names
+- [x] Local scoreboard with names
