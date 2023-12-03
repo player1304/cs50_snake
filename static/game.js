@@ -14,12 +14,13 @@ const UP = 0;
 const DOWN = 1;
 const LEFT = 2;
 const RIGHT = 3;
-const GAMEOVER_DEBUG = false; // go straight to lose if set to true
+const GAMEOVER_DEBUG = true; // go straight to lose if set to true
 
 // game related parameters
 var widthInBlocks = 15; // 15*16 = 240
 var heightInBlocks = 20; // 20*16 = 320
 var gameSpeed = TILE_DIMENSION * 10; // the bigger the SLOWER
+var playerName = "Player 1"; // can be changed by nameInputBox
 var highScore = { name: "Player 1", score: 0 }; // a single entry of {name, score}, which will be compared against localstorage
 
 // initiate the global variables
@@ -33,12 +34,17 @@ class gamestart extends Phaser.Scene {
   }
   preload() {
     this.load.image("startButton", "assets/startButton.png");
+    this.load.html("form", "form.html");
   }
 
   create() {
     console.log("game start scene reached");
 
     var startGroup = this.add.group();
+
+    var nameInputBox = this.add
+      .dom(gameConfig.width / 2, gameConfig.height / 3)
+      .createFromCache("form");
 
     // display a start button
     var startButton = this.add.sprite(
@@ -50,6 +56,7 @@ class gamestart extends Phaser.Scene {
     startButton.y = gameConfig.height / 2;
 
     // add the button to the group
+    startGroup.add(nameInputBox);
     startGroup.add(startButton);
 
     // click button to start
@@ -57,6 +64,14 @@ class gamestart extends Phaser.Scene {
     startButton.on(
       "pointerdown",
       function () {
+        // read name into storage
+        // console.log(nameInputBox)
+        console.log(this);
+        console.log(nameInputBox);
+        playerName = nameInputBox.getChildByID("name").value;
+        console.log(`the current playerName is ${playerName}`);
+
+        // start the game
         startGame();
       },
       this
@@ -290,7 +305,7 @@ class playgame extends Phaser.Scene {
     // check for high score
     this.highScore = localStorage.getItem(gameConfig.localStorageName);
     if (this.highScore == null) {
-      this.highScore = { name: "Player1", score: 0 }; // TODO name not used for now
+      this.highScore = { name: "Player 1", score: 0 }; // TODO name not used for now
     }
 
     // get random start locations
@@ -329,13 +344,6 @@ class playgame extends Phaser.Scene {
       return;
     }
 
-    /**
-     * Check which key is pressed, and then change the direction the snake
-     * is heading based on that. The checks ensure you don't double-back
-     * on yourself, for example if you're moving to the right and you press
-     * the LEFT cursor, it ignores it, because the only valid directions you
-     * can move in at that time is up and down.
-     */
     if (cursors.left.isDown) {
       snake.faceLeft();
     } else if (cursors.right.isDown) {
@@ -356,15 +364,6 @@ class playgame extends Phaser.Scene {
     }
   }
 
-  /**
-   * We can place the food anywhere in our grid
-   * *except* on-top of the snake, so we need
-   * to filter those out of the possible food locations.
-   * If there aren't any locations left, they've won!
-   *
-   * @method repositionFood
-   * @return {boolean} true if the food was placed, otherwise false
-   */
   repositionFood() {
     //  First create an array that assumes all positions
     //  are valid for the new piece of food
@@ -469,29 +468,24 @@ class gameover extends Phaser.Scene {
   }
 
   showMessageBox(text, w, h) {
-    // remove in case already exists
     // https://newdocs.phaser.io/docs/3.70.0/Phaser.GameObjects.Group#clear
-    // if (this.msgBox) {
-    //   this.msgBox.clear(true, true);
-    // }
 
-    //make a group to hold all the elements
+
     var msgBox = this.add.group();
 
-    //make the back of the message box
-    var back = this.add.sprite(
+    var backDrop = this.add.sprite(
       gameConfig.width / 2,
       gameConfig.height / 2,
       "boxBack"
     );
-    //make the close button
+
     var closeButton = this.add.sprite(
       gameConfig.width / 2,
       gameConfig.height / 2,
       "closeButton"
     );
-    //make a text field
-    var text1 = this.add.text(
+
+    var gameOverText = this.add.text(
       gameConfig.width / 2,
       gameConfig.height / 2 + 10,
       text
@@ -505,31 +499,25 @@ class gameover extends Phaser.Scene {
       wordWrapWidth: w * 0.9,
     };
 
-    text1.setStyle(gameOverTextStyle);
+    gameOverText.setStyle(gameOverTextStyle);
 
-    //set the width and height passed
-    //in the parameters
-    back.width = w;
-    back.height = h;
+    backDrop.width = w;
+    backDrop.height = h;
 
     closeButton.width = w / 2;
     closeButton.height = h / 10;
-    //
-    //
-    //
-    //add the elements to the group
-    msgBox.add(back);
+
+    
+    msgBox.add(backDrop);
     msgBox.add(closeButton);
-    msgBox.add(text1);
-    //
-    //set the close button
-    //in the center horizontally
-    //and near the bottom of the box vertically
+    msgBox.add(gameOverText);
+
+    
     closeButton.x = w / 2;
     closeButton.y = h / 2 + closeButton.height * 2;
-    //enable the button for input
     closeButton.setInteractive();
-    //add a listener to destroy the box when the button is pressed
+
+    // add a listener to destroy the box and restart when the button is pressed
     closeButton.on(
       "pointerdown",
       function () {
@@ -537,16 +525,14 @@ class gameover extends Phaser.Scene {
       },
       this
     );
-    //
-    //
-    //set the message box in the center of the screen
+
+    // set location of msgBox and gameOverText
     msgBox.x = gameConfig.width / 2 - msgBox.width / 2;
     msgBox.y = gameConfig.height / 2 - msgBox.height / 2;
-    //
-    //set the text in the middle of the message box
-    text1.x = back.width / 2 - text1.width / 2;
-    text1.y = back.height / 2 - text1.height; // go up a bit
-    //make a state reference to the messsage box
+    gameOverText.x = backDrop.width / 2 - gameOverText.width / 2;
+    gameOverText.y = backDrop.height / 2 - gameOverText.height; // go up a bit
+
+    // make a state reference to the messsage box
     this.msgBox = msgBox;
   }
 
@@ -554,13 +540,17 @@ class gameover extends Phaser.Scene {
     this.msgBox.clear(true, true);
 
     // try to restart the scene
-    console.log(this);
+    // console.log(this);
     this.scene.start("PlayGame");
   }
 }
 
 var gameConfig = {
   type: Phaser.AUTO,
+  // enable working with DOM elements
+  dom: { 
+    createContainer: true,
+  },
   // the game grid, translated to pixels
   width: widthInBlocks * TILE_DIMENSION,
   height: heightInBlocks * TILE_DIMENSION,
