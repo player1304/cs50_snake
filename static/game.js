@@ -20,7 +20,7 @@ const GAMEOVER_DEBUG = false; // go straight to lose if set to true
 var widthInBlocks = 15; // 15*16 = 240
 var heightInBlocks = 20; // 20*16 = 320
 var gameSpeed = TILE_DIMENSION * 10; // the bigger the SLOWER
-var highScore = {name: "Player 1", score: 0}; // a single entry of {name, score}, which will be compared against localstorage
+var highScore = { name: "Player 1", score: 0 }; // a single entry of {name, score}, which will be compared against localstorage
 
 // initiate the global variables
 var food;
@@ -40,10 +40,12 @@ class gamestart extends Phaser.Scene {
 
     var startGroup = this.add.group();
 
-    // display a start button 
-    var startButton = this.add.sprite(     gameConfig.width / 2,
-    gameConfig.height / 2,
-    "startButton");
+    // display a start button
+    var startButton = this.add.sprite(
+      gameConfig.width / 2,
+      gameConfig.height / 2,
+      "startButton"
+    );
     startButton.x = gameConfig.width / 2;
     startButton.y = gameConfig.height / 2;
 
@@ -53,18 +55,17 @@ class gamestart extends Phaser.Scene {
     // click button to start
     startButton.setInteractive();
     startButton.on(
-        "pointerdown",
-        function () {
-          startGame();
-        },
-        this
-      );
+      "pointerdown",
+      function () {
+        startGame();
+      },
+      this
+    );
     function startGame() {
       startGroup.clear(true, true);
-      game.scene.start('PlayGame');
+      game.scene.start("PlayGame");
     }
   }
-
 }
 
 class playgame extends Phaser.Scene {
@@ -72,64 +73,62 @@ class playgame extends Phaser.Scene {
     super("PlayGame");
   }
 
-  initialize() {
-    
-  }
+  initialize() {}
 
   preload() {
-      this.load.image("food", "assets/food.png");
-      this.load.image("body", "assets/body.png");
-      this.load.image("closeButton", "assets/closeButton.png");
-      this.load.image("boxBack", "assets/boxBack.png");
-      this.load.audio("eat", "assets/eat.wav");
-      this.load.audio("lose", "assets/lose.ogg");
+    this.load.image("food", "assets/food.png");
+    this.load.image("body", "assets/body.png");
+    this.load.image("closeButton", "assets/closeButton.png");
+    this.load.image("boxBack", "assets/boxBack.png");
+    this.load.audio("eat", "assets/eat.wav");
+    this.load.audio("lose", "assets/lose.ogg");
   }
 
   create() {
     console.log("play game scene reached");
     var Food = new Phaser.Class({
       Extends: Phaser.GameObjects.Image,
-  
+
       initialize: function Food(scene, x, y) {
         Phaser.GameObjects.Image.call(this, scene);
-  
+
         this.setTexture("food");
         this.setPosition(x * TILE_DIMENSION, y * TILE_DIMENSION);
         this.setOrigin(0);
-  
+
         this.total = 0;
-  
+
         scene.children.add(this);
       },
-  
+
       eat: function () {
         this.total++;
       },
     });
-  
+
     var Snake = new Phaser.Class({
       initialize: function Snake(scene, x, y) {
         this.headPosition = new Phaser.Geom.Point(x, y);
-  
+
         this.body = scene.add.group();
-  
+
         this.head = this.body.create(
           x * TILE_DIMENSION,
           y * TILE_DIMENSION,
           "body"
         );
         this.head.setOrigin(0);
-  
+
         this.alive = true;
-  
+
         this.speed = gameSpeed;
-  
+
         this.length = 1; // for scoring purpose
-  
+
         this.moveTime = 0;
-  
+
         this.tail = new Phaser.Geom.Point(x, y);
-  
+
         this.heading = RIGHT;
         this.direction = RIGHT;
 
@@ -137,37 +136,37 @@ class playgame extends Phaser.Scene {
         this.eatSound = game.sound.add("eat");
         this.loseSound = game.sound.add("lose");
       },
-  
+
       update: function (time) {
         if (time >= this.moveTime) {
           return this.move(time);
         }
       },
-  
+
       faceLeft: function () {
         if (this.direction === UP || this.direction === DOWN) {
           this.heading = LEFT;
         }
       },
-  
+
       faceRight: function () {
         if (this.direction === UP || this.direction === DOWN) {
           this.heading = RIGHT;
         }
       },
-  
+
       faceUp: function () {
         if (this.direction === LEFT || this.direction === RIGHT) {
           this.heading = UP;
         }
       },
-  
+
       faceDown: function () {
         if (this.direction === LEFT || this.direction === RIGHT) {
           this.heading = DOWN;
         }
       },
-  
+
       move: function (time) {
         /**
          * Based on the heading property (which is the direction the pgroup pressed)
@@ -184,7 +183,7 @@ class playgame extends Phaser.Scene {
               widthInBlocks
             );
             break;
-  
+
           case RIGHT:
             this.headPosition.x = Phaser.Math.Wrap(
               this.headPosition.x + 1,
@@ -192,7 +191,7 @@ class playgame extends Phaser.Scene {
               widthInBlocks
             );
             break;
-  
+
           case UP:
             this.headPosition.y = Phaser.Math.Wrap(
               this.headPosition.y - 1,
@@ -200,7 +199,7 @@ class playgame extends Phaser.Scene {
               heightInBlocks
             );
             break;
-  
+
           case DOWN:
             this.headPosition.y = Phaser.Math.Wrap(
               this.headPosition.y + 1,
@@ -209,9 +208,9 @@ class playgame extends Phaser.Scene {
             );
             break;
         }
-  
+
         this.direction = this.heading;
-  
+
         //  Update the body segments and place the last coordinate into this.tail
         Phaser.Actions.ShiftPosition(
           this.body.getChildren(),
@@ -220,87 +219,87 @@ class playgame extends Phaser.Scene {
           1,
           this.tail
         );
-  
+
         //  Check to see if any of the body pieces have the same x/y as the head
         //  If they do, the head ran into the body
-  
+
         var hitBody = Phaser.Actions.GetFirst(
           this.body.getChildren(),
           { x: this.head.x, y: this.head.y },
           1
         );
-  
+
         if (hitBody) {
           console.log("dead");
           this.alive = false;
           this.loseSound.play();
           game.scene.start("GameOver");
-  
+
           return false;
         } else {
           //  Update the timer ready for the next movement
           this.moveTime = time + this.speed;
-  
+
           return true;
         }
       },
-  
+
       grow: function () {
         var newPart = this.body.create(this.tail.x, this.tail.y, "body");
-  
+
         newPart.setOrigin(0);
       },
-  
+
       collideWithFood: function (food) {
         if (this.head.x === food.x && this.head.y === food.y) {
           console.log("What is 'this' at collideWithFood");
           console.log(this);
 
           this.grow();
-  
+
           food.eat();
 
           this.eatSound.play();
 
           this.length++;
-  
+
           //  For every 5 items of food eaten we'll increase the snake speed a little
           if (this.speed > 20 && food.total % 5 === 0) {
             this.speed -= 5;
           }
-  
+
           return true;
         } else {
           return false;
         }
       },
-  
+
       updateGrid: function (grid) {
         //  Remove all body pieces from valid positions list
         this.body.children.each(function (segment) {
           var bx = segment.x / TILE_DIMENSION;
           var by = segment.y / TILE_DIMENSION;
-  
+
           grid[by][bx] = false;
         });
-  
+
         return grid;
       },
     });
-  
+
     // check for high score
     this.highScore = localStorage.getItem(gameConfig.localStorageName);
-    if(this.highScore == null){
-      this.highScore = {name: "Player1", score: 0}; // TODO name not used for now
+    if (this.highScore == null) {
+      this.highScore = { name: "Player1", score: 0 }; // TODO name not used for now
     }
 
     // get random start locations
-  
+
     let foodStartPos = {
       x: Phaser.Math.RND.integerInRange(0, Math.floor(widthInBlocks / 2)),
       y: Phaser.Math.RND.integerInRange(0, heightInBlocks - 1),
     };
-  
+
     let snakeStartPos = {
       x: Phaser.Math.RND.integerInRange(
         Math.floor(widthInBlocks / 2 + 1),
@@ -308,11 +307,11 @@ class playgame extends Phaser.Scene {
       ),
       y: Phaser.Math.RND.integerInRange(0, heightInBlocks - 1),
     };
-  
+
     // initiate the first food and snake
     food = new Food(this, foodStartPos.x, foodStartPos.y);
     snake = new Snake(this, snakeStartPos.x, snakeStartPos.y);
-  
+
     // keyboard controls
     cursors = this.input.keyboard.createCursorKeys();
     // swipe controls
@@ -322,14 +321,14 @@ class playgame extends Phaser.Scene {
   update(time, delta) {
     // FOR DEBUG OF GAME OVER SCREEN!!
     if (GAMEOVER_DEBUG == true) {
-      console.log("game over debug enabled!")
+      console.log("game over debug enabled!");
       this.scene.start("GameOver");
     }
 
     if (!snake.alive) {
       return;
     }
-  
+
     /**
      * Check which key is pressed, and then change the direction the snake
      * is heading based on that. The checks ensure you don't double-back
@@ -346,17 +345,17 @@ class playgame extends Phaser.Scene {
     } else if (cursors.down.isDown) {
       snake.faceDown();
     }
-  
+
     if (snake.update(time)) {
       //  If the snake updated, we need to check for collision against food
-  
+
       if (snake.collideWithFood(food)) {
         console.log("repositionFood() needs to trigger now");
         this.repositionFood();
       }
     }
   }
-  
+
   /**
    * We can place the food anywhere in our grid
    * *except* on-top of the snake, so we need
@@ -369,23 +368,23 @@ class playgame extends Phaser.Scene {
   repositionFood() {
     //  First create an array that assumes all positions
     //  are valid for the new piece of food
-  
+
     //  A Grid we'll use to reposition the food each time it's eaten
     var testGrid = [];
-  
+
     for (var y = 0; y < heightInBlocks; y++) {
       testGrid[y] = [];
-  
+
       for (var x = 0; x < widthInBlocks; x++) {
         testGrid[y][x] = true;
       }
     }
-  
+
     snake.updateGrid(testGrid);
-  
+
     //  Purge out false positions
     var validLocations = [];
-  
+
     for (var y = 0; y < heightInBlocks; y++) {
       for (var x = 0; x < widthInBlocks; x++) {
         if (testGrid[y][x] === true) {
@@ -394,14 +393,14 @@ class playgame extends Phaser.Scene {
         }
       }
     }
-  
+
     if (validLocations.length > 0) {
       //  Use the RNG to pick a random food position
       var pos = Phaser.Math.RND.pick(validLocations);
-  
+
       //  And place it
       food.setPosition(pos.x * TILE_DIMENSION, pos.y * TILE_DIMENSION);
-  
+
       return true;
     } else {
       return false;
@@ -415,7 +414,7 @@ class playgame extends Phaser.Scene {
     var fastEnough = swipeTime < gameConfig.swipeSettings.swipeMaxTime;
     var swipeMagnitude = Phaser.Geom.Point.GetMagnitude(swipe); // length of the Geom.Point object swipe
     var longEnough = swipeMagnitude > gameConfig.swipeSettings.swipeMinDistance;
-  
+
     if (fastEnough && longEnough) {
       // now, need to check direction
       Phaser.Geom.Point.SetMagnitude(swipe, 1); // normalize the swipe vector
@@ -461,14 +460,15 @@ class gameover extends Phaser.Scene {
       "Game Over! \n\nYour final score is: \n" +
         snake.length +
         "\nHighest score is: \n" +
-        highScore.score + "\nby\n" + highScore.name,
+        highScore.score +
+        "\nby\n" +
+        highScore.name,
       gameConfig.width,
       gameConfig.height
     );
   }
 
   showMessageBox(text, w, h) {
-   
     // remove in case already exists
     // https://newdocs.phaser.io/docs/3.70.0/Phaser.GameObjects.Group#clear
     // if (this.msgBox) {
@@ -545,7 +545,7 @@ class gameover extends Phaser.Scene {
     //
     //set the text in the middle of the message box
     text1.x = back.width / 2 - text1.width / 2;
-    text1.y = back.height / 2 - text1.height // go up a bit
+    text1.y = back.height / 2 - text1.height; // go up a bit
     //make a state reference to the messsage box
     this.msgBox = msgBox;
   }
@@ -555,7 +555,7 @@ class gameover extends Phaser.Scene {
 
     // try to restart the scene
     console.log(this);
-    this.scene.start('PlayGame');
+    this.scene.start("PlayGame");
   }
 }
 
@@ -571,11 +571,7 @@ var gameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
     parent: "thegame", // div tag in index.html
   },
-  scene: [
-    gamestart,
-    playgame,
-    gameover,
-  ],
+  scene: [gamestart, playgame, gameover],
   swipeSettings: {
     swipeMaxTime: 1000, // otherwise it's a drag
     swipeMinDistance: 20, // otherwise it's a click
@@ -583,9 +579,8 @@ var gameConfig = {
   },
 };
 
-window.onload = function() {
+window.onload = function () {
   console.log("this");
   game = new Phaser.Game(gameConfig);
   window.focus();
-}
-
+};
