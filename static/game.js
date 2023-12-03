@@ -7,6 +7,8 @@
   - https://opengameart.org/content/10-8bit-coin-sounds
 */
 
+// TODO: sanitize name input; make the high score persistent
+
 const TILE_DIMENSION = 20;
 const CANVAS_COLOR = "#bfcc00";
 //  Direction consts
@@ -14,14 +16,14 @@ const UP = 0;
 const DOWN = 1;
 const LEFT = 2;
 const RIGHT = 3;
-const GAMEOVER_DEBUG = true; // go straight to lose if set to true
+const GAMEOVER_DEBUG = false; // go straight to lose if set to true
 
 // game related parameters
 var widthInBlocks = 15; // 15*16 = 240
 var heightInBlocks = 20; // 20*16 = 320
 var gameSpeed = TILE_DIMENSION * 10; // the bigger the SLOWER
 var playerName = "Player 1"; // can be changed by nameInputBox
-var highScore = { name: "Player 1", score: 0 }; // a single entry of {name, score}, which will be compared against localstorage
+var highScore = {}; // a single entry of {name, score}, which will be compared against localstorage
 
 // initiate the global variables
 var food;
@@ -39,7 +41,21 @@ class gamestart extends Phaser.Scene {
 
   create() {
     console.log("game start scene reached");
+    // get the high score from local storage
+    let tempHS = JSON.parse(localStorage.getItem(gameConfig.localStorageName));
 
+    // if local shows null, then put in a default value
+    if (tempHS == null) {
+      tempHS = {name: "Player 1", score: 3};
+      localStorage.setItem(gameConfig.localStorageName, JSON.stringify(tempHS));
+      console.log("default score put in");
+    } else {
+      // something in local, load it into highScore, will be checked in playgame.update()
+      console.log("at beginning, local high score = " + tempHS.name + " " + tempHS.score);
+      highScore.name = tempHS.name;
+      highScore.score = tempHS.score;
+    }
+ 
     var startGroup = this.add.group();
 
     var nameInputBox = this.add
@@ -65,8 +81,7 @@ class gamestart extends Phaser.Scene {
       "pointerdown",
       function () {
         // read name into storage
-        // console.log(nameInputBox)
-        console.log(this);
+        // console.log(this);
         console.log(nameInputBox);
         playerName = nameInputBox.getChildByID("name").value;
         console.log(`the current playerName is ${playerName}`);
@@ -245,7 +260,7 @@ class playgame extends Phaser.Scene {
         );
 
         if (hitBody) {
-          console.log("dead");
+          console.log("hitBody == true");
           this.alive = false;
           this.loseSound.play();
           game.scene.start("GameOver");
@@ -267,8 +282,8 @@ class playgame extends Phaser.Scene {
 
       collideWithFood: function (food) {
         if (this.head.x === food.x && this.head.y === food.y) {
-          console.log("What is 'this' at collideWithFood");
-          console.log(this);
+          // console.log("What is 'this' at collideWithFood");
+          // console.log(this);
 
           this.grow();
 
@@ -303,10 +318,12 @@ class playgame extends Phaser.Scene {
     });
 
     // check for high score
-    this.highScore = localStorage.getItem(gameConfig.localStorageName);
-    if (this.highScore == null) {
-      this.highScore = { name: "Player 1", score: 0 }; // TODO name not used for now
-    }
+    // this.highScore = JSON.parse(localStorage.getItem(gameConfig.localStorageName));
+    // if (this.highScore == null) {
+    //   //  no high score, so set to 0
+    //   console.log("no high score");
+    //   this.highScore = { name: "Player 1", score: 0 };
+    // }
 
     // get random start locations
 
@@ -340,6 +357,21 @@ class playgame extends Phaser.Scene {
       this.scene.start("GameOver");
     }
 
+    // check if needs to update localHighScore
+    if (snake.length > highScore.score || highScore == null) {
+      highScore.name = playerName;
+      highScore.score = snake.length;
+      console.log("high score updated: " + highScore.name + " " + highScore.score);
+      console.log(highScore)
+
+      // stores into localStorage
+      localStorage.setItem(gameConfig.localStorageName, JSON.stringify(highScore));
+
+      let temp = JSON.parse(localStorage.getItem(gameConfig.localStorageName));
+      console.log("at update, local high score = " + temp.name + " " + temp.score);
+    }
+    
+        
     if (!snake.alive) {
       return;
     }
@@ -358,7 +390,7 @@ class playgame extends Phaser.Scene {
       //  If the snake updated, we need to check for collision against food
 
       if (snake.collideWithFood(food)) {
-        console.log("repositionFood() needs to trigger now");
+        console.log("repositionFood() triggered");
         this.repositionFood();
       }
     }
@@ -446,14 +478,8 @@ class gameover extends Phaser.Scene {
     // var test = gameConfig.width;
     // console.log(test);
 
-    console.log("What is 'this' at gameover create()");
-    console.log(this);
-
-    // check if needs to update highScores
-    if (snake.length > highScore.score) {
-      highScore.score = snake.length;
-      localStorage.setItem(gameConfig.localStorageName, highScore.score);
-    }
+    // console.log("What is 'this' at gameover create()");
+    // console.log(this);
 
     this.showMessageBox(
       "Game Over! \n\nYour final score is: \n" +
@@ -555,7 +581,7 @@ var gameConfig = {
   width: widthInBlocks * TILE_DIMENSION,
   height: heightInBlocks * TILE_DIMENSION,
   backgroundColor: CANVAS_COLOR,
-  localStorageName: "highScores", // storing high score in a {name, score} dict
+  localStorageName: "CS50_Snake_LocalHighScore", // storing high score in a {name, score} dict
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
