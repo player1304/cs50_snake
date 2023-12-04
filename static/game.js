@@ -103,8 +103,6 @@ class playgame extends Phaser.Scene {
     super("PlayGame");
   }
 
-  initialize() {}
-
   preload() {
     this.load.image("food", "assets/food.png");
     this.load.image("body", "assets/body.png");
@@ -126,6 +124,7 @@ class playgame extends Phaser.Scene {
         this.setPosition(x * TILE_DIMENSION, y * TILE_DIMENSION);
         this.setOrigin(0);
 
+        // how many pieces of food has the snake taken
         this.total = 0;
 
         scene.children.add(this);
@@ -139,26 +138,20 @@ class playgame extends Phaser.Scene {
     var Snake = new Phaser.Class({
       initialize: function Snake(scene, x, y) {
         this.headPosition = new Phaser.Geom.Point(x, y);
-
         this.body = scene.add.group();
-
         this.head = this.body.create(
           x * TILE_DIMENSION,
           y * TILE_DIMENSION,
           "body"
         );
         this.head.setOrigin(0);
-
         this.alive = true;
-
         this.speed = gameSpeed;
-
         this.length = 1; // for scoring purpose
-
         this.moveTime = 0;
-
         this.tail = new Phaser.Geom.Point(x, y);
 
+        // go right at the beginning
         this.heading = RIGHT;
         this.direction = RIGHT;
 
@@ -173,6 +166,7 @@ class playgame extends Phaser.Scene {
         }
       },
 
+      // update heading, and avoid going back on itself (e.g. press left when going right)
       faceLeft: function () {
         if (this.direction === UP || this.direction === DOWN) {
           this.heading = LEFT;
@@ -299,7 +293,7 @@ class playgame extends Phaser.Scene {
       },
 
       updateGrid: function (grid) {
-        //  Remove all body pieces from valid positions list
+        // Remove all body pieces from valid positions list
         this.body.children.each(function (segment) {
           var bx = segment.x / TILE_DIMENSION;
           var by = segment.y / TILE_DIMENSION;
@@ -320,7 +314,9 @@ class playgame extends Phaser.Scene {
     // }
 
     // get random start locations
-
+    // make sure food is at the left side, and snake is at the right side
+    // to avoid putting a food directly to the right of snake at beginning
+    
     let foodStartPos = {
       x: Phaser.Math.RND.integerInRange(0, Math.floor(widthInBlocks / 2)),
       y: Phaser.Math.RND.integerInRange(0, heightInBlocks - 1),
@@ -476,7 +472,7 @@ class gameover extends Phaser.Scene {
     // console.log(this);
 
     if (highScore == null || highScore.name == null) {
-      // probably in privacy mode
+      // probably in privacy mode or other problem
       this.showMessageBox(
         "Game Over! \n\nYour final score is: \n" + snake.length,
         gameConfig.width,
